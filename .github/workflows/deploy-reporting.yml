@@ -1,0 +1,30 @@
+name: Deploy Reporting Service
+
+on:
+  push:
+    paths:
+      - 'reporting-service/**'
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Build image in ACR
+        run: |
+          az acr build --registry ${{ secrets.ACR_NAME }} --image reporting-service:${{ github.sha }} ./reporting-service
+
+      - name: Deploy to Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: reporting-service
+          images: ${{ secrets.ACR_NAME }}.azurecr.io/reporting-service:${{ github.sha }}

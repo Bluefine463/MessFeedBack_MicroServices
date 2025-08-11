@@ -1,0 +1,30 @@
+name: Deploy Feedback Service
+
+on:
+  push:
+    paths:
+      - 'feedback-service/**'
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Build image in ACR
+        run: |
+          az acr build --registry ${{ secrets.ACR_NAME }} --image feedback-service:${{ github.sha }} ./feedback-service
+
+      - name: Deploy to Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: feedback-service
+          images: ${{ secrets.ACR_NAME }}.azurecr.io/feedback-service:${{ github.sha }}
