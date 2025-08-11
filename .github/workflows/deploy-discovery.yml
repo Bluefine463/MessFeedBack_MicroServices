@@ -20,16 +20,19 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Docker login to ACR
+        run: az acr login --name ${{ secrets.ACR_NAME }}
+
+      - name: Build JAR with Maven
         run: |
-          az acr login --name ${{ secrets.ACR_NAME }}
+          cd discovery-service
+          mvn clean package -DskipTests
+          cd ..
 
       - name: Build Docker image
-        run: |
-          docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/discovery-service:${{ github.sha }} ./discovery-service
+        run: docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/discovery-service:${{ github.sha }} ./discovery-service
 
-      - name: Push Docker image to ACR
-        run: |
-          docker push ${{ secrets.ACR_NAME }}.azurecr.io/discovery-service:${{ github.sha }}
+      - name: Push Docker image
+        run: docker push ${{ secrets.ACR_NAME }}.azurecr.io/discovery-service:${{ github.sha }}
 
       - name: Deploy to Web App
         uses: azure/webapps-deploy@v2
