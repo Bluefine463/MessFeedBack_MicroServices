@@ -19,9 +19,17 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Build image in ACR
+      - name: Docker login to ACR
         run: |
-          az acr build --registry ${{ secrets.ACR_NAME }} --image reporting-service:${{ github.sha }} ./reporting-service
+          az acr login --name ${{ secrets.ACR_NAME }}
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/reporting-service:${{ github.sha }} ./reporting-service
+
+      - name: Push Docker image to ACR
+        run: |
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/reporting-service:${{ github.sha }}
 
       - name: Deploy to Web App
         uses: azure/webapps-deploy@v2
